@@ -1,0 +1,131 @@
+每个sql对应的字段信息：
+【用户基本信息语句】			user_info.sql
+		      字段：			loan_id
+								channel
+								gender
+								age
+								phone
+								attribution1_province
+								attribution2_province
+								is_phone_same
+								create_time
+
+								
+【overdue_day和repay_status】   due_mask_info.sql	
+					字段：		loan_id
+								ds
+								overdue_day
+								repay_status
+							
+								
+【借款事件关联蜜罐信息语句】 	load_miguan_info.sql
+					字段：		loan_id
+								channel
+								mg_gray_score
+								mg_contact_num
+								mg_contact2_num
+								mg_search_num
+	
+
+【借款事件关联前海信息语句】	load_qianhai_info.sql
+					字段：		loan_id
+								channel
+								qh_long_position_score
+								qh_institution_num
+
+
+【第一次借款申请时间与微博注册时间差语句】      load_weibo_info.sql
+							字段：				loan_id
+												channel
+												wb_daydiff_number
+
+
+【手机号入网时间与本次借款时间差语句】      network_load_info.sql
+							字段：			loan_id
+											channel
+											network_days
+
+
+【紧急联系人更新语句】          emergency_update_info.sql
+				字段：			mobile
+								channel
+								emergency_contact_call_num_150
+								emergency_contact_out_num_150
+								emergency_contact_in_time_150
+
+【贝壳同盾风险、信用分】        bk_load_td_info.sql
+				字段：			loan_id
+								channel
+								td_risk_score
+								td_credit_score
+
+【贝壳同盾风险、信用分】        bk_td_risk_creadit.sql
+				字段：			loan_id
+								channel
+								td_loan_times
+
+
+【借款事件关联同盾信息语句weibo】       load_weibo_td_info.sql
+					字段：				loan_id
+										channel
+										td_loan_times
+
+【借款事件关联同盾信息语句hao123】      load_hao123_td_info.sql
+					字段：				loan_id
+										channel
+										td_loan_times
+
+【借款事件关联同盾信息语句bbqb】        load_bbqb_td_info.sql
+					字段：				loan_id
+										channel
+										td_loan_times
+
+【同盾信用分，风险分语句weibo】         td_weibo_risk_info.sql
+					字段：				loan_id
+										channel
+										td_risk_score
+										td_credit_score
+
+【同盾信用分，风险分语句hao123】        td_hao123_risk_info.sql
+					字段：				loan_id
+										channel
+										td_risk_score
+										td_credit_score
+
+【同盾信用分，风险分语句bbqb】          td_bbqb_risk_info.sql
+					字段：				loan_id
+										channel
+										td_risk_score
+										td_credit_score
+
+【借款成功且还款到期用户近150天通话详单语句】        load_150_info.sql
+					字段：							 mobile
+													 ds
+													 other_mobile
+													 call_channel
+													 call_time
+													 call_datetime
+													 create_time
+													 call_fee
+
+【通话详单一体化SQL语句】           call_detail_info.sql
+					字段：			channel
+									mobile
+									total_call_num_150
+									incoming_call_rate_150
+									valid_contacts_num_150
+									valid_contacts_num_out_150
+									contact_num_150
+									no_call_days_150
+									call_police_num
+									fare_30
+									dawn_contact_num_150
+									dawn_out_call_num_150
+									dawn_in_call_num_150
+									incoming_call_rate_30_150
+									outgoing_incoming_contacts_rate_30
+
+【近150天呼入超过3次以上座机数量语句】       150_in3_info.sql
+					字段：					 mobile
+											 channel
+											 incoming_landline_num_150

@@ -1,0 +1,25 @@
+/xiaov/xiaov_CallDetails/model_data/...
+
+/xiaov/
+└── xiaov_CallDetails
+    └── model_data
+        ├── center_data   # 不变的属性,每天添加即可
+        ├── incre_center_data   # 增量数据存放位置
+        ├── dueday_data   # 计算overdue_day/mark每天迭代
+        ├── merge_data    # 将每个sql产生的数据进行merge
+        ├── final_data    # 最后model需要的数据
+        └── sql           # 放置计算全量数据和增量数据的sql
+
+
+xiaov/
+└── xiaov_CallDetails
+    └── model_data
+        ├── center_data
+        ├── dueday_data
+        ├── final_data
+        ├── incre_center_data
+        ├── merge_data
+        │   ├── full_data
+        │   ├── full_incre_data
+        │   └── incre_data
+        └── sql

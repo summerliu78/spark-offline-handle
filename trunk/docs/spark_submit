@@ -1,0 +1,152 @@
+#!/bin/bash
+source /etc/profile
+source /home/tinyv/.bash_profile
+
+JAR_NAME=/home/tinyv/hjj/model/test_model/modeldata-1.0-SNAPSHOT.jar
+CLASSNAME=com.yinker.tinyv.action.$1
+HBASE_CONFIG_PATH=/usr/hdp/current/hbase-client/conf/
+SPARK_CLIENT_HOME=/usr/hdp/current/spark-client
+LIB_HOME=$SPARK_CLIENT_HOME/lib
+HIVE_SITE_FILE=$SPARK_CLIENT_HOME/conf/hive-site.xml
+JSON_JAR_HOME=/home/tinyv/hjj/jar
+NOW=$(date  '+%Y%m%d-%H%M%S')
+TADAY=$(date '+%Y%m%d')
+LOG_HOME="/home/tinyv/hjj/model/test_model/log"
+RES_STATUS=""
+
+JARS="$LIB_HOME/datanucleus-api-jdo-3.2.6.jar,$LIB_HOME/datanucleus-core-3.2.10.jar,$LIB_HOME/datanucleus-rdbms-3.2.9.jar,$JSON_JAR_HOME/json-serde-1.3.7-jar-with-dependencies.jar"
+
+function job_status(){
+	LOG_FILE_PATH=$1
+	APP_NAME=$(egrep -o "application_[0-9]+_[0-9]+"  $LOG_FILE_PATH |tail -1)
+	STATUS=$(yarnstatus $APP_NAME)
+	if [ $STATUS == "FAILED" ];then
+		return 1
+	else
+		return 0
+	fi
+}
+
+function run(){
+
+#spark任务队列
+QUEUE=$1
+
+#executor cpu cores
+CORES_NUM=$2
+
+#excutor 内存大小
+MEM_NUM=$3
+
+#executor数量
+EXECUTOR_NUM=$4
+
+#driver 内存大小
+DRIVER_MEM=$5
+
+#yarn 模式
+YARN_TYPE=$6
+
+#并行度
+PARA_NUM=$7
+
+#调度任务的任务类型  rely merge union join
+SCALE=$8
+
+#全量或者增量任务
+SCHEDULER=$9
+
+#rely任务的三个类型
+TYPE=${10}
+
+
+#
+####任务日志所在的位置	
+case $SCALE in
+full)
+	LOG_NAME="$LOG_HOME/$TADAY/${SCALE}_${SCHEDULER}_$TYPE-$NOW.log"
+;;
+incre)
+	LOG_NAME="$LOG_HOME/$TADAY/${SCALE}_${SCHEDULER}-$NOW.log"
+;;
+*)
+	echo "参数输入错误"
+;;
+esac
+
+
+spark-submit \
+--queue $QUEUE \
+--executor-cores $CORES_NUM \
+--executor-memory $MEM_NUM \
+--num-executors  $EXECUTOR_NUM \
+--driver-memory $DRIVER_MEM \
+--master yarn \
+--deploy-mode $YARN_TYPE \
+--jars "$JARS" \
+--files $HIVE_SITE_FILE \
+--conf spark.default.parallelism=$PARA_NUM \
+--conf spark.eventLog.enabled=false \
+--conf spark.speculation=true \
+--conf spark.driver.extraClassPath=$HBASE_CONFIG_PATH \
+--class $CLASSNAME $JAR_NAME \
+task.scheduler=$SCHEDULER \
+task.scale=$SCALE \
+task.type=$TYPE > $LOG_NAME 2>&1
+RES_STATUS=$LOG_NAME
+
+}
+
+
+#-------------------------------------main-----------------------------------------
+FREE_MEM=$(free -m | awk '/buffers\// {print $NF}')
+MEM_LIMINAL=4000
+
+if [[ $FREE_MEM -gt $MEM_LIMINAL ]];then
+
+	if [ ! -d $LOG_HOME/$TADAY ];then
+        	mkdir -p $LOG_HOME/$TADAY
+	fi
+	run "tinyv_spark" 2 2G 20 2G cluster 80 full rely AutoFirstProcessor
+	sleep 3
+
+	job_status $RES_STATUS
+	if [[ $? -eq 1 ]];then
+		echo "$RES_STATUS 任务执行失败,程序退出"
+		exit 1
+	fi
+	run "tinyv_spark" 2 2G 20 2G cluster 80 full rely AutoSecondProcessor
+	sleep 3
+
+	job_status $RES_STATUS
+	if [[ $? -eq 1 ]];then
+		echo "$RES_STATUS 任务执行失败,程序退出"
+		exit 1
+	fi
+	
+	T_NUM=$(hive -e "use tinyv_analysis_db;show tables" | grep "loan_call_detail_150_model"|wc -l)
+	if [ $T_NUM -ge 1 ];then
+		hive -e "drop table tinyv_analysis_db.loan_call_detail_150_model"
+	fi
+	run tinyv_spark 2 4G 40 2G cluster 320 full rely AutoThirdProcessor
+	sleep 3
+
+	job_status $RES_STATUS
+	if [[ $? -eq 1 ]];then 
+		echo "$RES_STATUS 任务执行失败,程序退出"
+		exit 1
+	fi
+
+	run tinyv_spark 2 2G 20 2G merge 80 full merge
+	sleep 3
+
+	job_status $RES_STATUS
+	if [[ $? -eq 1 ]];then 
+		echo "$RES_STATUS 任务执行失败,程序退出"
+		exit 1
+	fi
+	
+	run tinyv_spark 2 2G 20 2G cluster 80 full join
+else 	
+	echo -e "需要内存: [\033[36m${MEM_LIMINAL}M\033[0m] 剩余内存: [\033[31m ${FREE_MEM}M \033[0m]" | column -t
+fi

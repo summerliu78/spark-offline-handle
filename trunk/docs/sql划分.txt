@@ -1,0 +1,25 @@
+#########  AutoFirstProcessor  ##########
+【用户基本信息语句】							    user_info_new.sql
+【overdue_day和repay_status】				    due_mask_info.sql
+【借款事件关联蜜罐信息语句】 				    	load_miguan_info.sql
+【借款事件关联前海信息语句】				    	load_qianhai_info.sql
+【第一次借款申请时间与微博注册时间差语句】           load_weibo_info.sql
+【手机号入网时间与本次借款时间差语句】               network_load_info.sql
+【贝壳同盾风险、信用分】                            bk_load_td_info.sql
+【贝壳同盾风险、信用分】                            bk_td_risk_creadit.sql
+
+
+#########  AutoSecondProcessor  ##########
+【借款事件关联同盾信息语句weibo】                   load_weibo_td_info.sql
+【借款事件关联同盾信息语句hao123】                  load_hao123_td_info.sql
+【借款事件关联同盾信息语句bbqb】                    load_bbqb_td_info.sql
+【同盾信用分，风险分语句weibo】                     td_weibo_risk_info.sql
+【同盾信用分，风险分语句hao123】                    td_hao123_risk_info.sql
+【同盾信用分，风险分语句bbqb】                      td_bbqb_risk_info.sql
+
+
+####### AutoThirdProcessor执行的是下面三个sql,后面两个依赖第一个 ########
+【借款成功且还款到期用户近150天通话详单语句】       load_150_info.sql
+【通话详单一体化SQL语句】                           call_detail_info.sql
+【近150天呼入超过3次以上座机数量语句】              150_in3_info.sql
+【紧急联系人更新语句】                              emergency_update_info.sql
